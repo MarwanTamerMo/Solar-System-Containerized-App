@@ -181,23 +181,13 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4.3.1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: eu-central-1
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws_region: eu-central-1
 
       - name: Update kubeconfig
         run: aws eks update-kubeconfig --name solar-system-cluster --region eu-central-1
-        
-      - name: Trigger app deployment
-        uses: statsig-io/kubectl-via-eksctl@main
-        with: # FIX Use "with:" no env to pass inputs to the action
-        aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws_region: 'eu-central-1'
-        cluster_name: 'solar-system-cluster'
 
-      - name: Deploy k8s deployments
+      - name: Deploy Kubernetes manifests
         run: |
           kubectl apply -f k8s/deployment.yaml
           kubectl apply -f k8s/service.yaml
-
-        working-directory: ./kubernetes
