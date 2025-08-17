@@ -154,9 +154,7 @@ jobs:
         working-directory: ./Terraform
 
       - name: Terraform Apply
-        run: |
-         terraform init
-         terraform destroy --auto-approve 
+        run: terraform apply --auto-approve
         
         working-directory: ./Terraform
 
