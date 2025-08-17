@@ -154,7 +154,10 @@ jobs:
         working-directory: ./Terraform
 
       - name: Terraform Apply
-        run: terraform apply --auto-approve
+        run: | 
+          terraform init
+          terraform destroy --auto-approve || true
+        # terraform apply --auto-approve
         working-directory: ./Terraform
 
       # - name: Terraform Apply
@@ -179,8 +182,8 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4.3.1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws_region: eu-central-1
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-central-1
 
       - name: Update kubeconfig
         run: aws eks update-kubeconfig --name solar-system-cluster --region eu-central-1
