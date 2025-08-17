@@ -4,9 +4,9 @@ metadata:
   name: microservice
   
 spec:
-  replicas: 3
+  replicas: 2 # Number of replicas
   selector:
-    matchLabels:
+    matchLabels: 
       app: microservice
   template:
     metadata:
