@@ -154,7 +154,9 @@ jobs:
         working-directory: ./Terraform
 
       - name: Terraform Apply
-        run: terraform apply --auto-approve
+        run: |
+          terraform init
+          terraform destroy --auto-approve || true
         working-directory: ./Terraform
 
       # - name: Terraform Apply
@@ -184,17 +186,14 @@ jobs:
 
       - name: Update kubeconfig
         run: aws eks update-kubeconfig --name solar-system-cluster --region eu-central-1
-
-      - name: Trigger app deployment
-        uses: statsig-io/kubectl-via-eksctl@main 
         
       - name: Trigger app deployment
         uses: statsig-io/kubectl-via-eksctl@main
-        with: #Fixed issue using -> with not env: 
-          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws_region: 'eu-central-1'
-          cluster_name: 'solar-system-cluster'
+        with: # FIX Use "with:" no env to pass inputs to the action
+        aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws_region: 'eu-central-1'
+        cluster_name: 'solar-system-cluster'
 
       - name: Deploy k8s deployments
         run: |
