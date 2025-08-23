@@ -59,7 +59,7 @@ jobs:
       - name: Render values with env
         working-directory: ./kubernetes
         run: |
-          envsubst < values.yml > /tmp/values.rendered.yaml
+          envsubst < values.yaml > /tmp/values.rendered.yaml
           echo "Rendered values:"
           cat /tmp/values.rendered.yaml
 
