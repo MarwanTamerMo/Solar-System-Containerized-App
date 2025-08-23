@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - feature-branch-1
+      - main
 
 env:
   MONGO_USERNAME: ${{ vars.MONGO_USERNAME }}
