@@ -1,0 +1,20 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: solar-system-servicemonitor
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+
+spec:
+  selector:
+    matchLabels:
+      app: solar-system-servicemonitor
+
+  namespaceSelector:
+    matchNames: ["default"]
+
+endpoints:
+  - port: http
+    path: /metrics
+    interval: 5s

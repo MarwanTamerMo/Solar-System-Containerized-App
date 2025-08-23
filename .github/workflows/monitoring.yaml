@@ -1,0 +1,81 @@
+name: Deploy Monitoring
+
+# This section triggers the workflow
+on:
+  workflow_run:
+    workflows: ["solar-system-workflow"]
+    types:
+      - completed
+    branches:
+      - main
+
+jobs:
+  deploy-monitoring:
+    # This condition ensures the job only runs if the first workflow succeeded
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    name: deploy to EKS monitoring
+    runs-on: ubuntu-latest
+    env:
+      AWS_REGION: eu-central-1
+      EKS_CLUSTER_NAME: stage-eks-cluster
+      GRAFANA_ADMIN_PASSWORD: ${{ secrets.GRAFANA_ADMIN_PASSWORD}}
+
+    steps:
+      - name: Checkout config files
+        uses: actions/checkout@v5 # Changed to v4 for latest version
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-central-1
+
+      - name: Update kubeconfig
+        run: aws eks --region eu-central-1 update-kubeconfig --name stage-eks-cluster
+
+      # This step seems redundant as you configure kubectl below. You can often remove it.
+      - name: Trigger app deployment
+        uses: statsig-io/kubectl-via-eksctl@main
+        env:
+          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          region: eu-central-1
+          cluster: stage-eks-cluster
+
+      - name: Create monitoring namespace
+        run: kubectl create namespace monitoring --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Add Helm repos
+        run: |
+          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+          helm repo add grafana https://grafana.github.io/helm-charts
+          helm repo update
+
+      - name: Render values with env
+        working-directory: ./kubernetes
+        run: |
+          envsubst < values.yml > /tmp/values.rendered.yaml
+          echo "Rendered values:"
+          cat /tmp/values.rendered.yaml
+
+      - name: Install/Upgrade kube-prometheus-stack
+        run: |
+          helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheus-stack \
+            --namespace monitoring \
+            --values /tmp/values.rendered.yaml \
+            --wait --timeout 15m
+
+      - name: Apply ServiceMonitor for my app
+        working-directory: ./kubernetes
+        run: kubectl apply -f servicemonitor-splar-system.yaml
+
+      - name: Show external endpoints
+        run: |
+          echo "Waiting for LoadBalancer IPs..."
+          kubectl -n monitoring wait --for=condition=available deploy/kube-prometheus-stack-grafana --timeout=10m
+          kubectl -n monitoring get svc -o wide
+          echo "Grafana URL:"
+          kubectl -n monitoring get svc kube-prometheus-stack-grafana -o jsonpath='{.status.loadBalancer.ingress[0].hostname}{"\n"}{.status.loadBalancer.ingress[0].ip}{"\n"}'
+          echo "Prometheus URL:"
+          kubectl -n monitoring get svc kube-prometheus-stack-prometheus -o jsonpath='{.status.loadBalancer.ingress[0].hostname}{"\n"}{.status.loadBalancer.ingress[0].ip}{"\n"}'
