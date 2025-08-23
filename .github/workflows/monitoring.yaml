@@ -19,12 +19,12 @@ jobs:
 
     env:
       AWS_REGION: eu-central-1
-      EKS_CLUSTER_NAME: stage-eks-cluster
+      EKS_CLUSTER_NAME: solar-system-cluster
       GRAFANA_ADMIN_PASSWORD: ${{ secrets.GRAFANA_ADMIN_PASSWORD}}
 
     steps:
       - name: Checkout config files
-        uses: actions/checkout@v5 # Changed to v4 for latest version
+        uses: actions/checkout@v5
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -34,16 +34,15 @@ jobs:
           aws-region: eu-central-1
 
       - name: Update kubeconfig
-        run: aws eks --region eu-central-1 update-kubeconfig --name stage-eks-cluster
+        run: aws eks --region eu-central-1 update-kubeconfig --name solar-system-cluster
 
-      # This step seems redundant as you configure kubectl below. You can often remove it.
       - name: Trigger app deployment
         uses: statsig-io/kubectl-via-eksctl@main
         env:
           aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           region: eu-central-1
-          cluster: stage-eks-cluster
+          cluster: solar-system-cluster
 
       - name: Output monitoring namespace YAML
         run: kubectl create namespace monitoring --dry-run=client -o yaml
