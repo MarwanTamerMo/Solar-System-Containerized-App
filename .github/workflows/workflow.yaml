@@ -185,9 +185,6 @@ jobs:
 
       - name: Update kubeconfig
         run: aws eks update-kubeconfig --name solar-system-cluster --region eu-central-1
-
-      - name: Trigger app deployment
-        uses: statsig-io/kubectl-via-eksctl@main 
         
       - name: Trigger app deployment
         uses: statsig-io/kubectl-via-eksctl@main

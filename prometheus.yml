@@ -1,0 +1,8 @@
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: "solar-system"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["solar-system:3000"]
